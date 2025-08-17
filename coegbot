@@ -1,0 +1,54 @@
+import discord
+from discord.ext import commands
+
+permisos = discord.Intents.default()
+permisos.message_content = True
+
+coegbot = commands.Bot(command_prefix="/", intents=permisos)
+
+# Consejos en una lista
+consejos = [
+    "1️ **Disminuir el consumo**: Compra solo lo necesario y evita productos con exceso de empaque.",
+    "2️ **Elegir productos con menos embalaje**: Opta por envases pequeños o sin empaque.",
+    "3️ **Evitar productos desechables**: Usa bolsas de tela y utensilios reutilizables.",
+    "4️ **Comprar local y de temporada**: Reduce la huella de carbono y apoya a productores locales.",
+    "5️ **Cocinar en casa**: Lleva tu propia comida al trabajo para evitar plásticos desechables."
+]
+
+# Guardar el progreso de cada usuario
+progreso = {}
+
+@coegbot.event
+async def on_ready():
+    print("✅ El bot está en línea como", coegbot.user)
+
+@coegbot.command()
+async def hola(ctx):
+    await ctx.send(" ¡Hola! Te voy a enseñar cómo reducir residuos en casa. Escribe **/enseñame** para empezar.")
+
+@coegbot.command()
+async def enseñame(ctx):
+    user_id = ctx.author.id
+    progreso[user_id] = 0  # Empezar desde el primer consejo
+    await ctx.send(f"🌱 {consejos[0]}\n\nEscribe **siguiente** para ver el próximo consejo.")
+
+@coegbot.event
+async def on_message(message):
+    if message.author == coegbot.user:
+        return
+
+    user_id = message.author.id
+
+    # Si el usuario escribió "siguiente" y ya empezó el aprendizaje
+    if message.content.lower() == "siguiente" and user_id in progreso:
+        progreso[user_id] += 1
+        if progreso[user_id] < len(consejos):
+            await message.channel.send(f"🌱 {consejos[progreso[user_id]]}\n\nEscribe **siguiente** para continuar.")
+        else:
+            await message.channel.send("🎉 ¡Felicidades! Ya aprendiste todos los consejos para reducir residuos en casa. 🌍✨")
+            del progreso[user_id]  # Reiniciamos para que pueda empezar de nuevo
+
+    # Procesar los demás comandos normalmente
+    await coegbot.process_commands(message)
+
+coegbot.run("MTQwNjY2NDExMjc2MjY1NDc0MA.G89XKy.cW2o0EEepPFIO-Gzmc-B31F3TQQJTqiNdBbNWw")
